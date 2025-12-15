@@ -241,5 +241,5 @@ else:
         st.image(Image.fromarray(transformed), use_column_width=True)
 
 st.markdown("---")
-st.caption(t["tip"])
+st.caption(t["tip"]) 
 
