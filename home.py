@@ -1,82 +1,212 @@
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFilter,ImageOps
-import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 
-# --- Language selection ---
-LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
-lang_choice = st.sidebar.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()), index=0)
-lang = LANG_OPTIONS[lang_choice]
-
+# --- 1. Definisi Teks Multilingual ---
 TEXT = {
     "en": {
-        "title": "Matrix & Convolution Explorer",
-        "lead": "This web application demonstrates basic 2D matrix transformations and convolution filters in image processing.",
-        "matrix": "Matrix Transformations (Affine)",
-        "matrix_desc": [
-            "Rotation",
-            "Scaling",
-            "Translation",
-            "Shear",
-            "Flip"
+        "page_title": "Matrix Transformation Image Processor",
+        "app_title": "Matrix Transformation Image Processor",
+        "description_header": "🌟 Application Description",
+        "description_lead": "Welcome to TransformMatrix! This multipage application is a comprehensive tool for exploring and applying fundamental image processing techniques using **matrix operations** and **convolution**.",
+        "description_list": [
+            "Visually see how various mathematical operations affect image pixels.",
+            "Apply geometric transformations (e.g., rotation, scaling) and convolution filters (e.g., blur, sharpen, edge detection).",
+            "Understand the concepts behind kernels and transformation matrices, which are central to modern graphics and computer vision algorithms."
         ],
-        "conv": "Convolution",
-        "conv_desc": "Convolution applies a kernel (small matrix) to extract features such as blur, edges, or sharpening.",
-        "visual": "Visual Examples",
-        "tip": "Go to Image Processing Tools to try interactive examples."
+        "geo_header": "📐 Understanding Matrix Transformations (Geometric)",
+        "geo_text": "Matrix transformation is a method used to change the position and orientation of every pixel in an image. Each pixel point $P=(x, y)$ is multiplied by a *Transformation Matrix* $\mathbf{T}$ to get the new position $P'=(x', y')$.",
+        "homogeneous_text": "In homogeneous coordinate representation, this is written as:",
+        "conv_header": "💡 Matrix Convolution",
+        "conv_text": "Convolution is a crucial operation for **filtering** and **feature extraction**. A small matrix called the **Kernel** (or *Filter*) is 'slid' across every image pixel. At each position, pixel values under the kernel are multiplied by the corresponding kernel values, and the results are summed to get the new output pixel value. ",
+        "sharpen_kernel": "Kernel for Sharpening",
+        "edge_kernel": "Kernel for Edge Detection (Laplacian)",
+        "cta_header": "🚀 Start Exploring",
+        "cta_text_1": "Use the navigation menu on the left (sidebar) to move to the processing pages:",
+        "cta_text_2": "* **Geometric Transformations:** To change the position, rotation, and scaling of the image.",
+        "cta_text_3": "* **Convolution Filters:** To apply filtering effects like blur, sharpen, and edge detection.",
+        "cta_end": "**Happy Experimenting!**",
+        "select_lang": "Language / Bahasa",
+        "transform_types": {
+            "Translation": "Translation (Shifting)",
+            "Rotation": "Rotation",
+            "Scaling": "Scaling",
+            "Shearing": "Shearing"
+        },
+        "sidebar_success": "Select a page above to start."
     },
     "id": {
-        "title": "Matrix & Convolution Explorer",
-        "lead": "Aplikasi web ini mendemonstrasikan transformasi matriks 2D dan filter konvolusi pada pengolahan citra.",
-        "matrix": "Transformasi Matriks (Affine)",
-        "matrix_desc": [
-            "Rotasi",
-            "Skala",
-            "Translasi",
-            "Shear",
-            "Flip"
+        "page_title": "Pemroses Gambar Transformasi Matriks",
+        "app_title": "Pemroses Gambar Transformasi Matriks",
+        "description_header": "🌟 Deskripsi Aplikasi",
+        "description_lead": "Selamat datang di TransformMatrix! Aplikasi *multipage* ini adalah alat komprehensif untuk eksplorasi dan aplikasi teknik pemrosesan gambar fundamental menggunakan **operasi matriks** dan **konvolusi**.",
+        "description_list": [
+            "Melihat secara langsung bagaimana berbagai operasi matematika memengaruhi piksel gambar.",
+            "Menerapkan transformasi geometris (misalnya, rotasi, skala) dan filter konvolusi (misalnya, *blur*, *sharpen*, pendeteksi tepi).",
+            "Memahami konsep di balik *kernel* dan *transformation matrix* yang menjadi inti dari banyak algoritma grafis dan visi komputer modern."
         ],
-        "conv": "Konvolusi",
-        "conv_desc": "Konvolusi menerapkan kernel (matriks kecil) untuk mengekstraksi fitur seperti blur, tepi, atau penajaman.",
-        "visual": "Contoh Visual",
-        "tip": "Buka halaman Image Processing Tools untuk mencoba contoh interaktif."
+        "geo_header": "📐 Pemahaman Transformasi Matriks (Geometric Transformations)",
+        "geo_text": "Transformasi matriks adalah metode yang digunakan untuk mengubah posisi dan orientasi setiap piksel dalam gambar (seolah-olah gambar adalah objek dalam ruang 2D). Setiap titik piksel $P=(x, y)$ dikalikan dengan sebuah *Transformation Matrix* $\mathbf{T}$ untuk mendapatkan posisi baru $P'=(x', y')$. ",
+        "homogeneous_text": "Dalam representasi koordinat homogen, ini ditulis sebagai:",
+        "conv_header": "💡 Konvolusi Matriks (Convolution)",
+        "conv_text": "Konvolusi adalah operasi yang sangat penting untuk **pemfilteran** dan **ekstraksi fitur** gambar. Sebuah matriks kecil yang disebut **Kernel** (atau *Filter*) 'menggeser' melintasi setiap piksel gambar. Pada setiap posisi, nilai piksel di bawah kernel dikalikan dengan nilai yang sesuai dalam kernel, dan hasilnya dijumlahkan untuk mendapatkan nilai piksel baru pada gambar keluaran. ",
+        "sharpen_kernel": "Kernel untuk *Sharpening*",
+        "edge_kernel": "Kernel untuk *Edge Detection* (Laplacian)",
+        "cta_header": "🚀 Mulai Eksplorasi",
+        "cta_text_1": "Gunakan menu navigasi di sisi kiri (sidebar) untuk berpindah ke halaman pemrosesan yang Anda inginkan:",
+        "cta_text_2": "* **Geometric Transformations:** Untuk mengubah posisi, rotasi, dan skala gambar.",
+        "cta_text_3": "* **Convolution Filters:** Untuk menerapkan efek pemfilteran seperti *blur*, *sharpen*, dan pendeteksi tepi.",
+        "cta_end": "**Selamat Bereksperimen!**",
+        "select_lang": "Pilih Bahasa",
+        "transform_types": {
+            "Translation": "Translasi (Pergeseran)",
+            "Rotation": "Rotasi",
+            "Scaling": "Penskalaan (*Scaling*)",
+            "Shearing": "Pencerminan (*Shearing*)"
+        },
+        "sidebar_success": "Pilih halaman di atas untuk memulai."
     }
 }
 
-def generate_demo(size=400):
-    img = Image.new("RGB", (size, size), (10, 18, 30))
-    draw = ImageDraw.Draw(img)
+# --- Style Customization (CSS) ---
+st.markdown("""
+<style>
+/* Style Neon untuk Judul Utama */
+.neon-title-h1 {
+    color: #00FFD1; /* Warna hijau kebiruan neon */
+    font-size: 2.5em;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00FFD1, 0 0 10px #00FFD1;
+    margin-bottom: 0;
+}
 
-    step = size // 8
-    for i in range(0, size, step):
-        draw.line((i, 0, i, size), fill=(40, 60, 90))
-        draw.line((0, i, size, i), fill=(40, 60, 90))
+/* Style Box untuk Teks Lead */
+.neon-box {
+    background-color: #0D2638; /* Latar belakang gelap */
+    border: 1px solid #00FFD1; /* Border neon */
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
 
-    return img
+/* Mengubah style st.info() untuk transformasi */
+div[data-testid="stInfo"] {
+    background-color: #0D2638; 
+    border-left: 5px solid #00FFD1; 
+    padding: 10px;
+    border-radius: 5px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-def render():
-    t = TEXT[st.session_state.lang]
 
-    st.markdown(f"<h1 style='color:#00ffe1'>{t['title']}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<div class='neon-box'>{t['lead']}</div>", unsafe_allow_html=True)
+# --- 2. Language Selection and State Management ---
+LANG_OPTIONS = {"English": "en", "Bahasa Indonesia": "id"}
+lang_choice = st.sidebar.selectbox("Language / Bahasa", list(LANG_OPTIONS.keys()), 
+                                   index=list(LANG_OPTIONS.keys()).index('Bahasa Indonesia'))
+lang = LANG_OPTIONS[lang_choice]
 
-    st.subheader(t["matrix"])
-    for item in t["matrix_desc"]:
-        st.markdown(f"- {item}")
+# Panggil semua teks dengan mudah
+T = TEXT[lang]
 
-    st.subheader(t["conv"])
-    st.markdown(t["conv_desc"])
+# --- Konfigurasi Halaman (Harus di awal) ---
+st.set_page_config(
+    page_title=T['page_title'],
+    page_icon="🖼️",
+    layout="wide"
+)
 
-    st.subheader(t["visual"])
-    demo = generate_demo()
-    edges = demo.convert("L").filter(ImageFilter.FIND_EDGES)
+# --- Judul Aplikasi & Lead (Menggunakan custom HTML sesuai permintaan Anda) ---
+# Judul Utama (Menggunakan class custom)
+st.markdown(f"<h1 style='color:#00ffe1'>{T['app_title']}</h1>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.caption("Original")
-        st.image(demo, use_column_width=True)
-    with col2:
-        st.caption("Edge Detection")
-        st.image(edges, use_column_width=True)
+st.markdown("---")
 
-    st.info(t["tip"])
+# --- Deskripsi Aplikasi (Lanjutan) ---
+st.header(T['description_header'])
+
+# Menggunakan list dari dictionary T
+st.markdown("Berikut yang dapat Anda lakukan:")
+for item in T['description_list']:
+    st.markdown(f"* {item}")
+
+st.markdown("---")
+
+# --- Bagian 1: Transformasi Matriks (Geometric) ---
+st.header(T['geo_header'])
+st.markdown(T['geo_text'])
+
+
+# Persamaan Transformasi
+st.latex(r"P' = \mathbf{T} \cdot P")
+
+st.markdown(T['homogeneous_text'])
+st.latex(r"""
+\begin{pmatrix} x' \\ y' \\ 1 \end{pmatrix}
+=
+\begin{pmatrix} a & b & t_x \\ c & d & t_y \\ 0 & 0 & 1 \end{pmatrix}
+\cdot
+\begin{pmatrix} x \\ y \\ 1 \end{pmatrix}
+""")
+
+
+st.subheader(f"Contoh-Contoh {T['geo_header'].split('(')[0].split(' ')[-1]} Utama:")
+
+# Menggunakan 4 kolom seperti di contoh
+col1, col2, col3, col4 = st.columns(4)
+
+# Menampilkan jenis-jenis transformasi dalam kolom dengan st.info()
+with col1:
+    st.info(f"**{T['transform_types']['Translation']}**")
+    st.markdown("Memindahkan objek ke posisi baru.")
+
+with col2:
+    st.info(f"**{T['transform_types']['Rotation']}**")
+    st.markdown("Memutar objek di sekitar titik tertentu.")
+
+with col3:
+    st.info(f"**{T['transform_types']['Scaling']}**")
+    st.markdown("Mengubah ukuran objek.")
+
+with col4:
+    st.info(f"**{T['transform_types']['Shearing']}**")
+    st.markdown("Memiringkan objek sepanjang satu sumbu.")
+
+
+st.markdown("---")
+
+# --- Bagian 2: Konvolusi Matriks (Convolution) ---
+st.header(T['conv_header'])
+st.markdown(T['conv_text'])
+
+
+st.subheader(f"Contoh Kernel ({T['conv_header'].split('(')[1].split(')')[0]} Matriks):")
+
+col_k1, col_k2 = st.columns(2)
+
+with col_k1:
+    st.markdown(f"**{T['sharpen_kernel']}**")
+    st.code("""
+    [[ 0, -1, 0],
+     [-1, 5, -1],
+     [ 0, -1, 0]]
+    """)
+
+with col_k2:
+    st.markdown(f"**{T['edge_kernel']}**")
+    st.code("""
+    [[ 0, 1, 0],
+     [ 1, -4, 1],
+     [ 0, 1, 0]]
+    """)
+
+st.markdown("---")
+
+# --- Ajakan Bertindak (Call to Action) ---
+st.header(T['cta_header'])
+st.markdown(T['cta_text_1'])
+st.markdown(T['cta_text_2'])
+st.markdown(T['cta_text_3'])
+st.markdown(T['cta_end'])
+
+# --- Tambahan untuk pengguna jika ini adalah file utama di struktur multipage ---
+if __name__ == '__main__':
+    st.sidebar.success(T['sidebar_success'])
